@@ -11,7 +11,10 @@ from nltk.stem import WordNetLemmatizer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.models import load_model
 
+nltk.download('punkt')
+nltk.download('wordnet')
 
 class IAssistant(metaclass=ABCMeta):
 
@@ -107,6 +110,7 @@ class GenericAssistant(IAssistant):
         model.save(f"{self.model_name}.h5", hist)
 
 
+
     def _clean_up_sentence(self, sentence):
         sentence_words = nltk.word_tokenize(sentence)
         sentence_words = [self.lemmatizer.lemmatize(word.lower()) for word in sentence_words]
@@ -122,15 +126,15 @@ class GenericAssistant(IAssistant):
         return np.array(bag)
 
     def _predict_class(self, sentence):
-        p = self._bag_of_words(sentence, words)
-        res = model.predict(np.array([p]))[0]
+        p = self._bag_of_words(sentence, self.words)
+        res = self.model.predict(np.array([p]))[0]
         ERROR_THRESHOLD = 0.1
         results = [[i, r] for i, r in enumerate(res) if r > ERROR_THRESHOLD]
 
         results.sort(key=lambda x: x[1], reverse=True)
         return_list = []
         for r in results:
-            return_list.append({'intent': classes[r[0]], 'probability': str(r[1])})
+            return_list.append({'intent': self.classes[r[0]], 'probability': str(r[1])})
         return return_list
 
     def _get_response(self, ints, intents_json):
@@ -155,4 +159,14 @@ class GenericAssistant(IAssistant):
         pass
 
     def request(self, message):
-        pass
+        self.lemmatizer = WordNetLemmatizer()
+        self.words = pickle.load(open('words.pkl', 'rb'))
+        self.classes = pickle.load(open('classes.pkl', 'rb'))
+        self.model = load_model(f'{self.model_name}.h5')
+
+        ints = self._predict_class(message)
+        print(self._get_response(ints, self.intents))
+
+test = GenericAssistant('intents.json', None)
+#test.train_model()
+test.request("Hello")
