@@ -4,6 +4,9 @@ import random
 import json
 import pickle
 import numpy as np
+import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import nltk
 from nltk.stem import WordNetLemmatizer
@@ -13,8 +16,8 @@ from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.models import load_model
 
-nltk.download('punkt')
-nltk.download('wordnet')
+nltk.download('punkt', quiet=True)
+nltk.download('wordnet', quiet=True)
 
 class IAssistant(metaclass=ABCMeta):
 
