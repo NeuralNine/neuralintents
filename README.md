@@ -50,8 +50,7 @@ while not done:
     else:
         assistant.request(message)
 ```
-# Sample intents.json File
-
+## Sample intents.json File
 ```json
 {"intents": [
   {"tag": "greeting",
