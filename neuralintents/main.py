@@ -41,19 +41,20 @@ class IAssistant(metaclass=ABCMeta):
 
 class GenericAssistant(IAssistant):
 
-    def __init__(self, intents, method_list, model_name="assistant_model"):
+    def __init__(self, intents, intent_methods={}, model_name="assistant_model"):
         self.intents = intents
-        self.method_list = method_list
+        self.intent_methods = intent_methods
         self.model_name = model_name
 
         if intents.endswith(".json"):
             self.load_json_intents(intents)
 
+        self.lemmatizer = WordNetLemmatizer()
+
     def load_json_intents(self, intents):
         self.intents = json.loads(open(intents).read())
 
     def train_model(self):
-        self.lemmatizer = WordNetLemmatizer()
 
         words = []
         classes = []
@@ -68,16 +69,15 @@ class GenericAssistant(IAssistant):
                 if intent['tag'] not in classes:
                     classes.append(intent['tag'])
 
-        words = [self.lemmatizer.lemmatize(w.lower()) for w in words if w not in ignore_letters]
-        words = sorted(list(set(words)))
+        self.words = [self.lemmatizer.lemmatize(w.lower()) for w in self.words if w not in ignore_letters]
+        self.words = sorted(list(set(self.words)))
 
-        classes = sorted(list(set(classes)))
+        self.classes = sorted(list(set(self.classes)))
 
-        pickle.dump(words, open('words.pkl', 'wb'))
-        pickle.dump(classes, open('classes.pkl', 'wb'))
+
 
         training = []
-        output_empty = [0] * len(classes)
+        output_empty = [0] * len(self.classes)
 
         for doc in documents:
             bag = []
@@ -96,20 +96,37 @@ class GenericAssistant(IAssistant):
         train_x = list(training[:, 0])
         train_y = list(training[:, 1])
 
-        model = Sequential()
-        model.add(Dense(128, input_shape=(len(train_x[0]),), activation='relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(64, activation='relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(len(train_y[0]), activation='softmax'))
+        self.model = Sequential()
+        self.model.add(Dense(128, input_shape=(len(train_x[0]),), activation='relu'))
+        self.model.add(Dropout(0.5))
+        self.model.add(Dense(64, activation='relu'))
+        self.model.add(Dropout(0.5))
+        self.model.add(Dense(len(train_y[0]), activation='softmax'))
 
         sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-        model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
+        self.model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
 
-        hist = model.fit(np.array(train_x), np.array(train_y), epochs=200, batch_size=5, verbose=1)
-        model.save(f"{self.model_name}.h5", hist)
+        self.hist = self.model.fit(np.array(train_x), np.array(train_y), epochs=200, batch_size=5, verbose=1)
 
+    def save_model(self, model_name=None):
+        if model_name is None:
+            self.model.save(f"{self.model_name}.h5", self.hist)
+            pickle.dump(self.words, open(f'{self.model_name}_words.pkl', 'wb'))
+            pickle.dump(self.classes, open(f'{self.model_name}_classes.pkl', 'wb'))
+        else:
+            self.model.save(f"{model_name}.h5", self.hist)
+            pickle.dump(self.words, open(f'{model_name}_words.pkl', 'wb'))
+            pickle.dump(self.classes, open(f'{model_name}_classes.pkl', 'wb'))
 
+    def load_model(self, model_name=None):
+        if model_name is None:
+            self.words = pickle.load(open(f'{self.model_name}_words.pkl', 'rb'))
+            self.classes = pickle.load(open(f'{self.model_name}_classes.pkl', 'rb'))
+            self.model = load_model(f'{self.model_name}.h5')
+        else:
+            self.words = pickle.load(open(f'{model_name}_words.pkl', 'rb'))
+            self.classes = pickle.load(open(f'{model_name}_classes.pkl', 'rb'))
+            self.model = load_model(f'{model_name}.h5')
 
     def _clean_up_sentence(self, sentence):
         sentence_words = nltk.word_tokenize(sentence)
@@ -159,14 +176,21 @@ class GenericAssistant(IAssistant):
         pass
 
     def request(self, message):
-        self.lemmatizer = WordNetLemmatizer()
-        self.words = pickle.load(open('words.pkl', 'rb'))
-        self.classes = pickle.load(open('classes.pkl', 'rb'))
-        self.model = load_model(f'{self.model_name}.h5')
 
         ints = self._predict_class(message)
-        print(self._get_response(ints, self.intents))
+        print(ints[0]['intent'])
+        print(ints)
 
-test = GenericAssistant('intents.json', None)
+        if ints[0]['intent'] in self.intent_methods.keys():
+            self.intent_methods[ints[0]['intent']]()
+        else:
+            print(self._get_response(ints, self.intents))
+
+
+def my_stock_function():
+    print("Stocks were triggered!")
+
+test = GenericAssistant('intents.json', {'stocks' : my_stock_function}, )
 #test.train_model()
-test.request("Hello")
+test.load_model()
+test.request("What are my stocks doing?")
