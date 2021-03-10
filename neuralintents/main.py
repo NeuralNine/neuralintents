@@ -56,18 +56,18 @@ class GenericAssistant(IAssistant):
 
     def train_model(self):
 
-        words = []
-        classes = []
+        self.words = []
+        self.classes = []
         documents = []
         ignore_letters = ['!', '?', ',', '.']
 
         for intent in self.intents['intents']:
             for pattern in intent['patterns']:
                 word = nltk.word_tokenize(pattern)
-                words.extend(word)
+                self.words.extend(word)
                 documents.append((word, intent['tag']))
-                if intent['tag'] not in classes:
-                    classes.append(intent['tag'])
+                if intent['tag'] not in self.classes:
+                    self.classes.append(intent['tag'])
 
         self.words = [self.lemmatizer.lemmatize(w.lower()) for w in self.words if w not in ignore_letters]
         self.words = sorted(list(set(self.words)))
@@ -83,11 +83,11 @@ class GenericAssistant(IAssistant):
             bag = []
             word_patterns = doc[0]
             word_patterns = [self.lemmatizer.lemmatize(word.lower()) for word in word_patterns]
-            for word in words:
+            for word in self.words:
                 bag.append(1) if word in word_patterns else bag.append(0)
 
             output_row = list(output_empty)
-            output_row[classes.index(doc[1])] = 1
+            output_row[self.classes.index(doc[1])] = 1
             training.append([bag, output_row])
 
         random.shuffle(training)
@@ -176,21 +176,9 @@ class GenericAssistant(IAssistant):
         pass
 
     def request(self, message):
-
         ints = self._predict_class(message)
-        print(ints[0]['intent'])
-        print(ints)
 
         if ints[0]['intent'] in self.intent_methods.keys():
             self.intent_methods[ints[0]['intent']]()
         else:
             print(self._get_response(ints, self.intents))
-
-
-def my_stock_function():
-    print("Stocks were triggered!")
-
-test = GenericAssistant('intents.json', {'stocks' : my_stock_function}, )
-#test.train_model()
-test.load_model()
-test.request("What are my stocks doing?")
