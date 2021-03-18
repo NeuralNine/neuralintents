@@ -94,7 +94,7 @@ class GenericAssistant(IAssistant):
             training.append([bag, output_row])
 
         random.shuffle(training)
-        training = np.array(training)
+        training = np.ndarray(training)
 
         train_x = list(training[:, 0])
         train_y = list(training[:, 1])
