@@ -96,6 +96,7 @@ class GenericAssistant(IAssistant):
         random.shuffle(training)
         training = np.ndarray(training)
 
+        
         train_x = list(training[:, 0])
         train_y = list(training[:, 1])
 
