@@ -27,11 +27,11 @@ while not done:
 ```python
 from neuralintents import GenericAssistant
 
-def function_for_greetings():
-    print("You triggered the greetings intent!")
+def function_for_greetings(response):
+    print("You triggered the greetings intent! ", response)
     # Some action you want to take
 
-def function_for_stocks():
+def function_for_stocks(response):
     print("You triggered the stocks intent!")
     # Some action you want to take
 
