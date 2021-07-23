@@ -19,7 +19,8 @@ while not done:
     if message == "STOP":
         done = True
     else:
-        assistant.request(message)
+        response = assistant.request(message)
+        print(response)
 ```
 
 ## Binding Functions To Requests
