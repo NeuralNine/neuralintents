@@ -56,7 +56,8 @@ class GenericAssistant(IAssistant):
         self.lemmatizer = WordNetLemmatizer()
 
     def load_json_intents(self, intents):
-        self.intents = json.loads(open(intents, encoding=self.json_encoding).read())
+        with open(intents, encoding=self.json_encoding) as f:
+            self.intents = json.load(f)
 
     def train_model(self):
 
@@ -115,21 +116,29 @@ class GenericAssistant(IAssistant):
     def save_model(self, model_name=None):
         if model_name is None:
             self.model.save(f"{self.model_name}.h5", self.hist)
-            pickle.dump(self.words, open(f'{self.model_name}_words.pkl', 'wb'))
-            pickle.dump(self.classes, open(f'{self.model_name}_classes.pkl', 'wb'))
+            with open(f'{self.model_name}_words.pkl', 'wb') as f:
+                pickle.dump(self.words, f)
+            with open(f'{self.model_name}_classes.pkl', 'wb') as f:
+                pickle.dump(self.classes, f)
         else:
             self.model.save(f"{model_name}.h5", self.hist)
-            pickle.dump(self.words, open(f'{model_name}_words.pkl', 'wb'))
-            pickle.dump(self.classes, open(f'{model_name}_classes.pkl', 'wb'))
+            with open(f'{model_name}_words.pkl', 'wb') as f:
+                pickle.dump(self.words, f)
+            with open(f'{model_name}_classes.pkl', 'wb') as f:
+                pickle.dump(self.classes, f)
 
     def load_model(self, model_name=None):
         if model_name is None:
-            self.words = pickle.load(open(f'{self.model_name}_words.pkl', 'rb'))
-            self.classes = pickle.load(open(f'{self.model_name}_classes.pkl', 'rb'))
+            with open(f'{self.model_name}_words.pkl', 'rb') as f:
+                self.words = pickle.load(f)
+            with open(f'{self.model_name}_classes.pkl', 'rb') as f:
+                self.classes = pickle.load(f)
             self.model = load_model(f'{self.model_name}.h5')
         else:
-            self.words = pickle.load(open(f'{model_name}_words.pkl', 'rb'))
-            self.classes = pickle.load(open(f'{model_name}_classes.pkl', 'rb'))
+            with open(f'{model_name}_words.pkl', 'rb') as f:
+                self.words = pickle.load(f)
+            with open(f'{model_name}_classes.pkl', 'rb') as f:
+                self.classes = pickle.load(f)
             self.model = load_model(f'{model_name}.h5')
 
     def _clean_up_sentence(self, sentence):
