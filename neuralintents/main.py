@@ -44,10 +44,11 @@ class IAssistant(metaclass=ABCMeta):
 
 class GenericAssistant(IAssistant):
 
-    def __init__(self, intents, intent_methods={}, model_name="assistant_model"):
+    def __init__(self, intents, intent_methods={}, model_name="assistant_model", *, json_encoding='utf-8'):
         self.intents = intents
         self.intent_methods = intent_methods
         self.model_name = model_name
+        self.json_encoding = json_encoding
 
         if intents.endswith(".json"):
             self.load_json_intents(intents)
@@ -55,7 +56,7 @@ class GenericAssistant(IAssistant):
         self.lemmatizer = WordNetLemmatizer()
 
     def load_json_intents(self, intents):
-        self.intents = json.loads(open(intents).read())
+        self.intents = json.loads(open(intents, encoding=self.json_encoding).read())
 
     def train_model(self):
 
