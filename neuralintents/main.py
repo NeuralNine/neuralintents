@@ -5,6 +5,7 @@ import json
 import pickle
 import numpy as np
 import os
+import voice
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -55,7 +56,8 @@ class GenericAssistant(IAssistant):
         self.lemmatizer = WordNetLemmatizer()
 
     def load_json_intents(self, intents):
-        self.intents = json.loads(open(intents).read())
+        json_file = open("intents.json")
+        self.intents = json.load(json_file)
 
     def train_model(self):
 
@@ -184,4 +186,4 @@ class GenericAssistant(IAssistant):
         if ints[0]['intent'] in self.intent_methods.keys():
             self.intent_methods[ints[0]['intent']]()
         else:
-            return self._get_response(ints, self.intents)
+            voice.say(self._get_response(ints, self.intents))
