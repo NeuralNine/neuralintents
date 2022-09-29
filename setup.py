@@ -21,7 +21,7 @@ setup(
     long_description_content_type="text/markdown",
     long_description=long_description,
     packages=find_packages(),
-    install_requires=['numpy', 'nltk', 'tensorflow'],
+    install_requires=['numpy', 'nltk', 'tensorflow', 'gtts', 'pyttsx3'],
     keywords=['python', 'neural', 'machine learning', 'chatbots', 'chat', 'artificial intelligence', 'virtual assistant'],
     classifiers=[
         "Development Status :: 1 - Planning",
