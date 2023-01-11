@@ -11,13 +11,14 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import nltk
 from nltk.stem import WordNetLemmatizer
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout
-from tensorflow.keras.optimizers import SGD
-from tensorflow.keras.models import load_model
+from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.layers import Dense, Dropout
+from tensorflow.python.keras.optimizer_v2.gradient_descent import SGD
+from tensorflow.python.keras.models import load_model
 
 nltk.download('punkt', quiet=True)
 nltk.download('wordnet', quiet=True)
+
 
 class IAssistant(metaclass=ABCMeta):
 
@@ -44,7 +45,11 @@ class IAssistant(metaclass=ABCMeta):
 
 class GenericAssistant(IAssistant):
 
-    def __init__(self, intents, intent_methods={}, model_name="assistant_model"):
+    def __init__(self, intents, intent_methods, model_name="assistant_model"):
+        self.hist = None
+        self.model = None
+        self.words = None
+        self.classes = None
         self.intents = intents
         self.intent_methods = intent_methods
         self.model_name = model_name
@@ -77,8 +82,6 @@ class GenericAssistant(IAssistant):
 
         self.classes = sorted(list(set(self.classes)))
 
-
-
         training = []
         output_empty = [0] * len(self.classes)
 
@@ -94,7 +97,7 @@ class GenericAssistant(IAssistant):
             training.append([bag, output_row])
 
         random.shuffle(training)
-        training = np.array(training)
+        training = np.array(training, dtype=object)
 
         train_x = list(training[:, 0])
         train_y = list(training[:, 1])
@@ -162,7 +165,7 @@ class GenericAssistant(IAssistant):
             tag = ints[0]['intent']
             list_of_intents = intents_json['intents']
             for i in list_of_intents:
-                if i['tag']  == tag:
+                if i['tag'] == tag:
                     result = random.choice(i['responses'])
                     break
         except IndexError:
