@@ -13,7 +13,7 @@ from nltk.stem import WordNetLemmatizer
 
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
-from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.optimizers.legacy import SGD
 from tensorflow.keras.models import load_model
 
 nltk.download('punkt', quiet=True)
@@ -94,7 +94,7 @@ class GenericAssistant(IAssistant):
             training.append([bag, output_row])
 
         random.shuffle(training)
-        training = np.array(training)
+        training = np.array(training, dtype=object)
 
         train_x = list(training[:, 0])
         train_y = list(training[:, 1])
