@@ -17,8 +17,7 @@ from keras.optimizers import SGD
 from keras.models import load_model
 import pandas as pd
 
-nltk.download('punkt', quiet=True)
-nltk.download('wordnet', quiet=True)
+
 
 class IAssistant(metaclass=ABCMeta):
 
@@ -45,7 +44,7 @@ class IAssistant(metaclass=ABCMeta):
 
 class GenericAssistant(IAssistant):
 
-    def __init__(self, intents, intent_methods={}, model_name="assistant_model"):
+    def __init__(self, intents, intent_methods={}, model_name="peripheral_killer"):
         self.intents = intents
         self.intent_methods = intent_methods
         self.model_name = model_name
@@ -186,4 +185,4 @@ class GenericAssistant(IAssistant):
         if ints[0]['intent'] in self.intent_methods.keys():
             self.intent_methods[ints[0]['intent']]()
         else:
-            print(self._get_response(ints, self.intents))
+            return self._get_response(ints, self.intents)
