@@ -11,13 +11,13 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import nltk
 from nltk.stem import WordNetLemmatizer
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout
-from tensorflow.keras.optimizers import SGD
-from tensorflow.keras.models import load_model
+from keras.models import Sequential
+from keras.layers import Dense, Dropout
+from keras.optimizers import SGD
+from keras.models import load_model
+import pandas as pd
 
-nltk.download('punkt', quiet=True)
-nltk.download('wordnet', quiet=True)
+
 
 class IAssistant(metaclass=ABCMeta):
 
@@ -44,7 +44,7 @@ class IAssistant(metaclass=ABCMeta):
 
 class GenericAssistant(IAssistant):
 
-    def __init__(self, intents, intent_methods={}, model_name="assistant_model"):
+    def __init__(self, intents, intent_methods={}, model_name="peripheral_killer"):
         self.intents = intents
         self.intent_methods = intent_methods
         self.model_name = model_name
@@ -94,7 +94,8 @@ class GenericAssistant(IAssistant):
             training.append([bag, output_row])
 
         random.shuffle(training)
-        training = np.array(training)
+        df = pd.DataFrame(training, columns=['patterns', 'intents'])
+        training = df.to_numpy()
 
         train_x = list(training[:, 0])
         train_y = list(training[:, 1])
