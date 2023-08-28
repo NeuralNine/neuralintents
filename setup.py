@@ -7,11 +7,10 @@ here = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
     long_description = "\n" + fh.read()
 
-VERSION = '0.0.4'
+VERSION = '0.1.0'
 DESCRIPTION = 'Simple interface for working with intents and chatbots.'
 LONG_DESCRIPTION = 'Simple interface for working with intents and chatbots.'
 
-# Setting up
 setup(
     name="neuralintents",
     version=VERSION,

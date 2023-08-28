@@ -1,1 +1,2 @@
-from neuralintents.main import GenericAssistant
+from neuralintents.assistants import BasicAssistant
+from neuralintents.assistants import GenericAssistant
