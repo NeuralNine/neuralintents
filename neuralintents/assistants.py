@@ -80,7 +80,7 @@ class BasicAssistant:
 
         return X, y
 
-    def fit_model(self, optimizer: Optimizer = None, epochs=200):
+    def fit_model(self, optimizer: Optimizer = None, epochs: int = 200):
         X, y = self._prepare_intents_data()
 
         if self.hidden_layers is None:
@@ -116,7 +116,7 @@ class BasicAssistant:
         self.words = pickle.load(open(f'{self.model_name}_words.pkl', 'rb'))
         self.intents = pickle.load(open(f'{self.model_name}_intents.pkl', 'rb'))
 
-    def _predict_intent(self, input_text):
+    def _predict_intent(self, input_text: str):
         input_words = nltk.word_tokenize(input_text)
         input_words = [self.lemmatizer.lemmatize(w.lower()) for w in input_words]
 
@@ -140,7 +140,7 @@ class BasicAssistant:
 
         return predicted_intent
 
-    def process_input(self, input_text):
+    def process_input(self, input_text: str):
         predicted_intent = self._predict_intent(input_text)
 
         try:
