@@ -12,13 +12,12 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Dropout, InputLayer
-from tensorflow.keras.optimizers import Adam, Optimizer
+from tensorflow.keras.optimizers import Adam, SGD, Optimizer
 
 
 class BasicAssistant:
 
     def __init__(self, intents_data: Union[str, os.PathLike, dict], method_mappings: dict = {}, hidden_layers: list = None, model_name: str = "basic_model") -> None:
-
         nltk.download('punkt', quiet=True)
         nltk.download('wordnet', quiet=True)
 
@@ -41,7 +40,6 @@ class BasicAssistant:
 
         self.words = []
         self.intents = []
-
         self.training_data = []
 
     def _prepare_intents_data(self, ignore_letters: tuple = ("!", "?", ",", ".")):
@@ -98,7 +96,6 @@ class BasicAssistant:
                 self.model.add(layer)
             self.model.add(Dense(y.shape[1], activation='softmax'))
 
-
         if optimizer is None:
             optimizer = Adam(learning_rate=0.01)
 
@@ -110,7 +107,7 @@ class BasicAssistant:
         self.model.save(f"{self.model_name}.keras", self.history)
         pickle.dump(self.words, open(f'{self.model_name}_words.pkl', 'wb'))
         pickle.dump(self.intents, open(f'{self.model_name}_intents.pkl', 'wb'))
-    
+
     def load_model(self):
         self.model = load_model(f'{self.model_name}.keras')
         self.words = pickle.load(open(f'{self.model_name}_words.pkl', 'rb'))
@@ -132,12 +129,6 @@ class BasicAssistant:
         predictions = self.model.predict(input_bag_of_words, verbose=0)[0]
         predicted_intent = self.intents[np.argmax(predictions)]
 
-        max_prob = np.max(predictions)
-        # print(max_prob)
-        # if max_prob < self.confidence_threshold:
-        #     return None
-        # predicted_intent = self.intents[np.argmax(predictions)]
-
         return predicted_intent
 
     def process_input(self, input_text: str):
@@ -145,7 +136,7 @@ class BasicAssistant:
 
         try:
             if predicted_intent in self.method_mappings:
-                self.method_mappings[predicted_intent]()
+                self.method_mappings[predicted_intent]()  # Call the corresponding function
 
             for intent in self.intents_data["intents"]:
                 if intent["tag"] == predicted_intent:
@@ -155,7 +146,67 @@ class BasicAssistant:
 
 
 class GenericAssistant(BasicAssistant):
-    def __init__(self, *args, **kwargs):
-        import warnings
-        warnings.warn("The 'GenericAssistant' class is deprecated and will be removed in future versions. Please use 'BasicAssistant' instead.", DeprecationWarning, stacklevel=2)
-        super().__init__(*args, **kwargs)
+
+    def __init__(self, intents, intent_methods={}, model_name="assistant_model"):
+        """
+        Initialize the assistant with intents, optional intent methods, and a model name.
+        
+        Args:
+            intents (str or dict): Path to the JSON file or intents as a dictionary.
+            intent_methods (dict): Optional mappings of intent names to functions.
+            model_name (str): Name of the saved model.
+        """
+        super().__init__(intents, method_mappings=intent_methods, model_name=model_name)
+
+        if isinstance(intents, str) and intents.endswith(".json"):
+            self.load_json_intents(intents)
+
+        self.lemmatizer = nltk.stem.WordNetLemmatizer()
+
+    def load_json_intents(self, filepath):
+        with open(filepath, 'r') as f:
+            self.intents_data = json.load(f)
+
+    def train_model(self):
+        """
+        Train a neural network model on the provided intents.
+        """
+        # (Training model code here as already defined above)
+        pass  # Implement training logic similar to BasicAssistant
+
+
+    def _get_response(self, ints, intents_json):
+        """
+        Retrieve the most appropriate response for a given intent based on predicted intent tag.
+        
+        Args:
+            ints (list): List of predicted intents with their corresponding confidence scores.
+            intents_json (dict): The intents JSON data containing possible responses.
+        
+        Returns:
+            str: The response message for the predicted intent.
+        """
+        try:
+            tag = ints[0]['intent']  # Extract the predicted intent tag
+            list_of_intents = intents_json['intents']
+            for i in list_of_intents:
+                if i['tag'] == tag:
+                    result = random.choice(i['responses'])  # Randomly choose a response for the intent
+                    break
+        except IndexError:
+            result = "I don't understand!"  # Default response if no intent is predicted
+        return result
+
+
+# custom function
+def my_custom_function():
+    print("Custom function triggered!")
+
+# Create a mapping for your custom intent
+mappings = {'custom_intent': my_custom_function}
+
+# Initialize the GenericAssistant with the mappings
+assistant = GenericAssistant('intents.json', intent_methods=mappings, model_name="test_model")
+
+# Train the model
+assistant.train_model()

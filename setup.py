@@ -10,7 +10,6 @@ with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
 VERSION = '0.1.0'
 DESCRIPTION = 'Simple interface for working with intents and chatbots.'
 LONG_DESCRIPTION = 'Simple interface for working with intents and chatbots.'
-
 setup(
     name="neuralintents",
     version=VERSION,
@@ -21,7 +20,10 @@ setup(
     long_description=long_description,
     packages=find_packages(),
     install_requires=['numpy', 'nltk', 'tensorflow'],
-    keywords=['python', 'neural', 'machine learning', 'chatbots', 'chat', 'artificial intelligence', 'virtual assistant'],
+    extras_require={
+        'testing': ['pytest'],  # Optional testing dependency
+    },
+    keywords=['python', 'neural', 'machine learning', 'chatbots', 'chat', 'artificial intelligence', 'virtual assistant', 'deep learning', 'tensorflow'],
     classifiers=[
         "Development Status :: 1 - Planning",
         "Intended Audience :: Developers",
