@@ -92,12 +92,3 @@ class TrainableExtractor:
 
         self._train_data = list(zip(sentences, entities))
 
-
-if __name__ == '__main__':
-    extractor = TrainableExtractor('/home/neuralnine/Documents/Programming/Personal/neuralintents_fun/entity_data.json', 'md')
-    extractor.train_model(epochs=30)
-    print(extractor.extract_entities('How much are 7 laptops?'))
-    print(extractor.extract_entities('What is the price of 5 pens?'))
-    print(extractor.extract_entities('How much are 7 bottles of milk?'))
-
-
