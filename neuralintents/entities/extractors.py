@@ -1,12 +1,13 @@
 import os
 import json
 import random
-import itertools
 from typing import Literal
 
 import spacy
 from spacy.util import minibatch
 from spacy.training.example import Example
+
+from neuralintents.entities.utils import generate_messages_from_templates
 
 
 class BaseExtractor:
@@ -21,7 +22,7 @@ class LocationExtractor:
 
 class TrainableExtractor:
 
-    def __init__(self, train_data_path: str | os.PathLike, model_type: ['sm', 'md', 'lg', 'trf'] = 'sm') -> None:
+    def __init__(self, intents_path: str | os.PathLike, intent_tag: str, model_type: ['sm', 'md', 'lg', 'trf'] = 'sm') -> None:
         # TODO: python -m spacy download en_core_web_lg  (handle this)
         if model_type not in ['sm', 'md', 'lg', 'trf']:
             raise ValueError('Model type needs to be part of ["sm", "md", "lg", "trf"]')
@@ -29,7 +30,7 @@ class TrainableExtractor:
         self.model = spacy.load(f'en_core_web_{model_type}')
         self._train_data = None
 
-        self._load_train_data(train_data_path)
+        self._load_train_data(intents_path, intent_tag)
 
     def train_model(self, epochs: int = 50, batch_size: int = 8) -> None:
         with self.model.disable_pipes([pipe for pipe in self.model.pipe_names if pipe != 'ner']):
@@ -55,31 +56,40 @@ class TrainableExtractor:
         document = self.model(text)
         return [(entity.text, entity.label_) for entity in document.ents]
 
-    def _load_train_data(self, train_data_path: str | os.PathLike) -> None:
-        with open(train_data_path, 'r') as file:
-            train_data = json.load(file)
+    def _load_train_data(self, intents_path: str | os.PathLike, intent_tag: str) -> None:
+        with open(intents_path, 'r') as file:
+            json_data = json.load(file)
 
-        templates = train_data['templates']
-        placeholders = train_data['placeholders']
+        for intent in json_data['intents']:
+            if intent['tag'] == intent_tag:
+                train_data = intent
+                break
+        else:
+            raise ValueError(f'Intent {intent_tag} not found in JSON file.')
 
-        placeholder_values = {placeholder: train_data[category] for placeholder, category in placeholders.items()}
+        # templates = train_data['patterns']
+        # placeholders = train_data['placeholders']
 
-        combinations = itertools.product(*placeholder_values.values())
+        # placeholder_values = {placeholder: train_data[category] for placeholder, category in placeholders.items()}
 
-        sentences = []
-        entities = []
+        # combinations = itertools.product(*placeholder_values.values())
 
-        for template in templates:
-            for combination in combinations:
-                sentence = template
-                entity_list = []
-                for placeholder, value in zip(placeholder_values.keys(), combination):
-                    label = placeholders[placeholder]
-                    placeholder_position = sentence.index(placeholder)
-                    sentence = sentence[:placeholder_position] + value + sentence[placeholder_position+1:]
-                    entity_list.append((placeholder_position, placeholder_position+len(value), label))
-                sentences.append(sentence)
-                entities.append(entity_list)
+        # sentences = []
+        # entities = []
+
+        # for template in templates:
+        #     for combination in combinations:
+        #         sentence = template
+        #         entity_list = []
+        #         for placeholder, value in zip(placeholder_values.keys(), combination):
+        #             label = placeholders[placeholder]
+        #             placeholder_position = sentence.index(placeholder)
+        #             sentence = sentence[:placeholder_position] + value + sentence[placeholder_position+1:]
+        #             entity_list.append((placeholder_position, placeholder_position+len(value), label))
+        #         sentences.append(sentence)
+        #         entities.append(entity_list)
+
+        sentences, entities = generate_messages_from_templates(train_data)
 
         if 'ner' not in self.model.pipe_names:
             ner = self.model.add_pipe('ner', last=True)

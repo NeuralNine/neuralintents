@@ -5,6 +5,8 @@ import nltk  # TODO: Replace later on with nlp module and also download punkt et
 import numpy as np
 import numpy.typing as npt
 
+from neuralintents.entities.utils import generate_messages_from_templates
+
 
 def tokenize_and_lemmatize(text: str) -> list[str]:
     lemmatizer = nltk.stem.WordNetLemmatizer()
@@ -28,6 +30,10 @@ def parse_intents(intents_path: str | os.PathLike, ignore_symbols: list[str] = [
         documents = []
 
         for intent in intents_data['intents']:
+            if 'placeholders' in intent:
+                sentences, _ = generate_messages_from_templates(intent)
+                intent['patterns'] = sentences
+
             if intent['tag'] not in intents:
                 intents.append(intent['tag'])
                 intents_responses[intent['tag']] = intent['responses']

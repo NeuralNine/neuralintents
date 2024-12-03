@@ -88,7 +88,10 @@ class BasicAssistant:
         predicted_intent = self.intents[predicted_class_index]
         predicted_probability = torch.max(predictions).item()
 
-        return random.choice(self.intents_responses[predicted_intent])
+        if self.intents_responses[predicted_intent]:
+            return random.choice(self.intents_responses[predicted_intent])
+        else:
+            return None
 
     def _load_intents(self) -> None:
         self.documents, self.vocabulary, self.intents, self.intents_responses = parse_intents(self.intents_path)
@@ -96,48 +99,39 @@ class BasicAssistant:
 
 class AdvancedAssistant(BasicAssistant):
 
-    # TODO: Replace with base class for extractors
-    def __init__(self, intents_path: str | os.PathLike, method_mappings: dict[str, typing.Callable], entity_extractor: typing.Optional[TrainableExtractor] = None) -> None:
+    # TODO: Replace type hint with base class for extractors
+    def __init__(self, intents_path: str | os.PathLike, method_mappings: dict[str, typing.Callable], extractor_mappings: dict[str, TrainableExtractor] = {}) -> None:
         super(AdvancedAssistant, self).__init__(intents_path)
 
         self.method_mappings = method_mappings
-        self.entity_extractor = entity_extractor
+        self.extractor_mappings = extractor_mappings
 
     def process(self, input_message: str) -> str:
         predicted_intent = self._predict_intent(input_message)
-
-        if predicted_intent in self.method_mappings:
-            self.method_mappings[predicted_intent]()
-
-        return random.choice(self.intents_responses[predicted_intent])
-
-    def process_with_entities(self, input_message: str) -> str:
-        if not self.entity_extractor:
-            raise RuntimeError('No entity extractor in assistant.')
-
-        predicted_intent = self._predict_intent(input_message)
-
-        # extract entities (one per label for now, improve later)
-        # TODO: There should be a possibility to add multiple extractors, a different one for each intent
-        extracted_entities = self.entity_extractor.extract_entities(input_message)
+        
         entities_dict = {}
 
+        if predicted_intent in self.extractor_mappings:
+            extracted_entities = self.extractor_mappings[predicted_intent].extract_entities(input_message)
 
-        for entity_text, entity_label in extracted_entities:
-            entities_dict[entity_label] = entity_text  # TODO: change later, mutliple entities overwrite one another
+            for entity_text, entity_label in extracted_entities:
+                entities_dict[entity_label] = entity_text  # TODO: change later to allow multiple values for same label (right now overwritten)
 
         if predicted_intent in self.method_mappings:
             method_to_call = self.method_mappings[predicted_intent]
             if set(inspect.getargspec(method_to_call)[0]) == set(entities_dict.keys()):
-                # TODO: Handle optional parameters
-                method_to_call(**entities_dict)
+                method_to_call(**entities_dict)  # TODO: Handle optional parameters
             else:
-                method_to_call()
+                try:
+                    method_to_call()
+                except TypeError:
+                    print('Warning: Could not call mapped function, due to parameter mismatch.')
         
-        # TODO: process entities as part of response (not just method call)
-        # Map labels to placeholders in responses
-        # Map labels to kwargs
-        return random.choice(self.intents_responses[predicted_intent])
+        # TODO: Process entities as part of response (if placeholders in responses)
+        if self.intents_responses[predicted_intent]:
+            return random.choice(self.intents_responses[predicted_intent])
+        else:
+            return None
 
     def _predict_intent(self, input_message: str) -> str:
         words = tokenize_and_lemmatize(input_message)
